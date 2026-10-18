@@ -232,8 +232,6 @@ def safeResolveDeps : M Unit := do
     network := true
   }
 
-def forbiddenPaths : Array System.FilePath := #["/run", "/var"]
-
 /--
 Builds and exports the project in one sandboxed `lake` process, and returns the export.
 
@@ -255,7 +253,7 @@ def withSafeCheckExport (f : System.FilePath → M α) : M α := do
         envOverride := #[("LEAN_ABORT_ON_PANIC", some "1"), ("LAKE_CHECK_EXPORT", some "1")]
         readablePaths := #[projectDir, ← getLeanPrefix, ← getLakeHome]
         writablePaths := #[projectDir / ".lake"]
-        tmpfsPaths := forbiddenPaths
+        tmpfsPaths := Sandbox.Linux.forbiddenPaths
       }
       f path
 
@@ -277,7 +275,7 @@ def safeLakeBuild (targets : Array Lean.Name) : M Unit := do
     envOverride := #[("LEAN_ABORT_ON_PANIC", some "1")]
     readablePaths := #[projectDir, ← getLeanPrefix, ← getLakeHome]
     writablePaths := #[dotLakeDir]
-    tmpfsPaths := forbiddenPaths
+    tmpfsPaths := Sandbox.Linux.forbiddenPaths
   }
 
 /-- Runs the bundled exporter in the sandbox, with the grants every export needs. -/
@@ -293,7 +291,7 @@ def withRunExporter (args : Array String) (f : System.FilePath → M α) : M α 
         ("PATH", some (← read).binPath)]
       readablePaths := #[projectDir, projectDir / ".lake", ← getLeanPrefix, whichLean4Export]
       writablePaths := #[]
-      tmpfsPaths := forbiddenPaths
+      tmpfsPaths := Sandbox.Linux.forbiddenPaths
     }
     f exportPath
 
@@ -343,7 +341,7 @@ def runExternalKernel (kernelName : String) (kernelCommand : Array String)
       envOverride := #[("LEAN_ABORT_ON_PANIC", some "1")]
       readablePaths := #[configPath.toString, solutionPath.toString, kernelExe, ← getLeanPrefix]
       writablePaths := #[]
-      tmpfsPaths := forbiddenPaths
+      tmpfsPaths := Sandbox.Linux.forbiddenPaths
       cwd := some (← Std.Internal.UV.System.osTmpdir)
     }
     try
@@ -517,7 +515,7 @@ def mkContext (cmd : String) (paranoid : Bool) (inadvisablyNoSandbox : Bool) (le
       let whichSandbox := (← IO.getEnv "COMPARATOR_BWRAP").getD "bwrap"
       let some sandboxPath ← whichExe whichSandbox
         | return .error (← cannotRun (missingSandboxError cmd whichSandbox))
-      pure <| .path sandboxPath.toString
+      pure <| .linux sandboxPath.toString
   -- Always the bundled exporter: the export format has to match the compiler that produced the
   -- oleans, so letting this be pointed elsewhere would reintroduce the toolchain-pinning problem.
   let whichLean4Export := lean.binDir / "leanexport" |>.addExtension System.FilePath.exeExtension
