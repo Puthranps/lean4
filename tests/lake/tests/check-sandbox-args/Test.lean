@@ -20,7 +20,7 @@ def request : SandboxArgs := {
   cmd := "/tool chain/bin/lake"
   args := #["check", "a literal; $(argument)", "--"]
   envPass := #["LAKE_SANDBOX_TEST_PASS", "LAKE_SANDBOX_TEST_DELETE",
-    "LAKE_SANDBOX_TEST_MISSING"]
+    "LAKE_SANDBOX_TEST_MISSING", "LAKE_SANDBOX_TEST_KEEP"]
   envOverride := #[("LAKE_SANDBOX_TEST_PASS", some "overridden"),
     ("LAKE_SANDBOX_TEST_DELETE", none), ("HOME", some "/untrusted-home")]
   readablePaths := #["/home/user/project with spaces", "/home/user/toolchain"]
@@ -30,7 +30,8 @@ def request : SandboxArgs := {
 
 public def main : IO Unit := do
   let env ← sandboxEnv request
-  check (env == #[("LAKE_SANDBOX_TEST_PASS", "overridden"), ("HOME", "/untrusted-home")])
+  check (env == #[("LAKE_SANDBOX_TEST_KEEP", "kept unchanged"),
+    ("LAKE_SANDBOX_TEST_PASS", "overridden"), ("HOME", "/untrusted-home")])
     "only explicitly selected and overridden variables should reach the sandbox"
 
   let args := buildSandboxArgs request env "/home/user/project with spaces"
@@ -69,8 +70,9 @@ public def main : IO Unit := do
 
   let sandboxed ← Sandbox.mkSpawnArgs (.path "/sandbox wrapper/bwrap") "/usr/bin/env" "/project" request
   check (sandboxed.cmd == "/usr/bin/env") "the sandbox must launch through env"
-  check (sandboxed.args.extract 0 2 == #["-i", "/sandbox wrapper/bwrap"])
-    "the wrapper must start with a cleared environment and an unmodified executable path"
+  check (sandboxed.args == #["-i", "/sandbox wrapper/bwrap"] ++
+    buildSandboxArgs request env "/project")
+    "the wrapper must include the complete sandbox restrictions and child command"
   check (sandboxed.cwd == some "/project") "the wrapper must start in the project directory"
 
   let direct ← Sandbox.mkSpawnArgs .noSandbox "/unused/env" "/project" request
@@ -78,4 +80,8 @@ public def main : IO Unit := do
     "explicitly unsandboxed execution must preserve the command and arguments"
   check (direct.cwd == some "/project" && direct.env == request.envOverride)
     "explicitly unsandboxed execution must preserve its environment and directory"
+  let directWithCwd ← Sandbox.mkSpawnArgs .noSandbox "/unused/env" "/project"
+    { request with cwd := some "/private working directory" }
+  check (directWithCwd.cwd == some "/private working directory")
+    "explicitly unsandboxed execution must honor an explicit working directory"
   IO.println "sandbox argument tests passed"

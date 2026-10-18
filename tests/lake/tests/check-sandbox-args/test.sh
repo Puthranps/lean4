@@ -2,6 +2,7 @@
 source ../common.sh
 
 export LAKE_SANDBOX_TEST_PASS=inherited
+export LAKE_SANDBOX_TEST_KEEP='kept unchanged'
 export LAKE_SANDBOX_TEST_DELETE=deleted
 export LAKE_SANDBOX_TEST_SECRET=secret
 unset LAKE_SANDBOX_TEST_MISSING
