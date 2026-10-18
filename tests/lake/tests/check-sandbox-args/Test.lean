@@ -1,8 +1,11 @@
 module
 
 import all Lake.Check.Sandbox
+import all Lake.Check.Sandbox.Types
+import all Lake.Check.Sandbox.Linux
+import all Lake.Check.Sandbox.Windows
 
-/-! Tests the process boundary used by `lake check` without requiring Linux namespaces. -/
+/-! Tests Linux sandbox argument construction, backend dispatch, and rejection of Windows requests. -/
 
 open Lake.Check
 
@@ -34,7 +37,7 @@ public def main : IO Unit := do
     ("LAKE_SANDBOX_TEST_PASS", "overridden"), ("HOME", "/untrusted-home")])
     "only explicitly selected and overridden variables should reach the sandbox"
 
-  let args := buildSandboxArgs request env "/home/user/project with spaces"
+  let args := Sandbox.Linux.buildArgs request env "/home/user/project with spaces"
   check (args.contains "--unshare-all") "sandbox namespaces must be isolated"
   check (args.contains "--die-with-parent") "sandbox must track the parent's lifetime"
   check (args.contains "--clearenv") "sandbox environment must be cleared"
@@ -61,17 +64,17 @@ public def main : IO Unit := do
   check (args.extract (args.size - tail.size) args.size == tail)
     "the command and literal arguments must follow the sandbox's option delimiter"
 
-  let networkArgs := buildSandboxArgs { request with network := true } #[] "/project"
+  let networkArgs := Sandbox.Linux.buildArgs { request with network := true } #[] "/project"
   check ((positions networkArgs #["--share-net"]).size == 1)
     "dependency fetching must be able to opt into networking"
-  let cwdArgs := buildSandboxArgs { request with cwd := some "/private working directory" } #[] "/project"
+  let cwdArgs := Sandbox.Linux.buildArgs { request with cwd := some "/private working directory" } #[] "/project"
   check ((positions cwdArgs #["--chdir", "/private working directory"]).size == 1)
     "an explicit working directory must override the project directory"
 
-  let sandboxed ← Sandbox.mkSpawnArgs (.path "/sandbox wrapper/bwrap") "/usr/bin/env" "/project" request
+  let sandboxed ← Sandbox.mkSpawnArgs (.linux "/sandbox wrapper/bwrap") "/usr/bin/env" "/project" request
   check (sandboxed.cmd == "/usr/bin/env") "the sandbox must launch through env"
   check (sandboxed.args == #["-i", "/sandbox wrapper/bwrap"] ++
-    buildSandboxArgs request env "/project")
+    Sandbox.Linux.buildArgs request env "/project")
     "the wrapper must include the complete sandbox restrictions and child command"
   check (sandboxed.cwd == some "/project") "the wrapper must start in the project directory"
 
@@ -84,4 +87,16 @@ public def main : IO Unit := do
     { request with cwd := some "/private working directory" }
   check (directWithCwd.cwd == some "/private working directory")
     "explicitly unsandboxed execution must honor an explicit working directory"
+
+  let windowsRequest := { request with
+    cmd := "C:\\tool chain\\bin\\lake.exe"
+    cwd := some "C:\\project with spaces"
+  }
+  let windowsRejected ← try
+    discard <| Sandbox.mkSpawnArgs .windows "/unused/env" "C:\\project with spaces" windowsRequest
+    pure false
+  catch e =>
+    pure (e.toString == "Native Windows sandboxing is not implemented.")
+  check windowsRejected
+    "the Windows backend must reject requests until native confinement is implemented"
   IO.println "sandbox argument tests passed"
