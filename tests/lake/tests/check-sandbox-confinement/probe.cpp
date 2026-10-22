@@ -82,15 +82,20 @@ int main(int argc, char ** argv) {
         return kill(std::stoul(argv[2]), 0) == 0 ? 0 : 10;
 #endif
     }
-    if (op == "spawn-write" && argc == 3) {
+    if ((op == "spawn-write" || op == "spawn-linger") && argc == 3) {
+        const char * action = op == "spawn-write" ? "write" : "linger";
 #ifdef _WIN32
-        const char * childArgs[] = {argv[0], "write", argv[2], nullptr};
+        // The CRT spawn API joins its arguments into a Windows command line.
+        // These fixture paths cannot contain quotes and always end in a filename.
+        std::string executable = '"' + std::string(argv[0]) + '"';
+        std::string target = '"' + std::string(argv[2]) + '"';
+        const char * childArgs[] = {executable.c_str(), action, target.c_str(), nullptr};
         auto code = _spawnv(_P_WAIT, argv[0], childArgs);
         return code == -1 ? 2 : static_cast<int>(code);
 #else
         pid_t pid = fork();
         if (pid == -1) return 2;
-        if (pid == 0) { execl(argv[0], argv[0], "write", argv[2], nullptr); _exit(2); }
+        if (pid == 0) { execl(argv[0], argv[0], action, argv[2], nullptr); _exit(2); }
         int status;
         if (waitpid(pid, &status, 0) != pid || !WIFEXITED(status)) return 2;
         return WEXITSTATUS(status);

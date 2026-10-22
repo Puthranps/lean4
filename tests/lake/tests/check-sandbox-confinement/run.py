@@ -35,7 +35,7 @@ def main():
         outside = root / "outside.txt"
         outside.write_text("private\n")
         # Put the probe and canary in a dedicated read-only tool directory.
-        tools = root / "tools"
+        tools = root / "tools with spaces"
         tools.mkdir()
         target = tools / probe.name
         shutil.copyfile(probe, target)
@@ -60,12 +60,14 @@ def main():
             }), encoding="utf-8")
             return [*options.driver, str(request_file)]
 
-        def check(name, arguments, expected=0, network=False, stdout=None):
+        def check(name, arguments, expected=0, network=False, stdout=None, invariant=None):
             completed = subprocess.run(request(arguments, network), capture_output=True,
                                        text=True, timeout=30)
             passed = completed.returncode in expected if isinstance(expected, tuple) else completed.returncode == expected
             if stdout is not None:
                 passed = passed and completed.stdout == stdout
+            if invariant is not None:
+                passed = passed and invariant()
             results.append({"name": name, "passed": passed,
                             "expected": expected, "actual": completed.returncode,
                             "stdout": completed.stdout, "stderr": completed.stderr})
@@ -81,8 +83,8 @@ def main():
         check("deny-outside-read", ["read", str(outside)], 10)
         # A hidden path may be recreated in Linux's private tmpfs. It must not
         # modify the original host file, regardless of the operation's exit code.
-        check("protect-outside-host-write", ["write", str(outside)], (0, 10))
-        results[-1]["passed"] = results[-1]["passed"] and outside.read_text() == "private\n"
+        check("protect-outside-host-write", ["write", str(outside)], (0, 10),
+              invariant=lambda: outside.read_text() == "private\n")
         check("child-inherits-restrictions", ["spawn-write", str(checker)], 10)
         check("selected-environment", ["env", "LEAN_SANDBOX_PASSED", "passed"])
         check("omit-other-environment", ["env", "LEAN_SANDBOX_SECRET", "<absent>"])
@@ -102,7 +104,7 @@ def main():
             check("allow-network", arguments, network=True)
 
         pidfile = outputs / "child.pid"
-        launched = subprocess.Popen(request(["linger", str(pidfile)]),
+        launched = subprocess.Popen(request(["spawn-linger", str(pidfile)]),
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         pid = None
         started = False
@@ -147,9 +149,9 @@ def main():
             # communicate() returning proves closure of the inherited output
             # pipes. The known linger probe holds them open for its lifetime.
             passed = started and (os.name != "nt" or (pid is not None and not alive))
-            results.append({"name": "launcher-death-kills-child", "passed": passed,
+            results.append({"name": "launcher-death-kills-descendants", "passed": passed,
                             "started": started, "host_pid": pid, "output_pipes_closed": True})
-            print(f"{'PASS' if passed else 'FAIL'} launcher-death-kills-child")
+            print(f"{'PASS' if passed else 'FAIL'} launcher-death-kills-descendants")
         finally:
             if launched.poll() is None:
                 launched.kill()
