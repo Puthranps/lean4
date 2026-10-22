@@ -1,0 +1,62 @@
+{
+  "platform": "posix",
+  "toolchain": "Lean (version 4.35.0, x86_64-unknown-linux-gnu, commit eb6cafb7290e8bd5f2937522d8d804f58f02bafc, Release)",
+  "selectedCheckers": [
+    "leanchecker",
+    "leanchecker-paranoid",
+    "lean4lean",
+    "nanoda_bin",
+    "con-leche",
+    "con-ron"
+  ],
+  "tests": [
+    {
+      "name": "build-and-export",
+      "passed": true,
+      "exit": 0,
+      "stderr": "\u2714 [2/3] Built Demo (182ms)\n"
+    },
+    {
+      "name": "leanchecker",
+      "passed": true,
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "name": "leanchecker-paranoid",
+      "passed": true,
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "name": "lean4lean",
+      "passed": true,
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "name": "nanoda_bin",
+      "passed": true,
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "name": "con-leche",
+      "passed": true,
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "name": "con-ron",
+      "passed": true,
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "name": "reject-invalid-proof",
+      "passed": true,
+      "exit": 1,
+      "stderr": ""
+    }
+  ]
+}

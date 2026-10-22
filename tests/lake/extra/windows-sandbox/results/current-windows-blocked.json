@@ -1,0 +1,12 @@
+{
+  "tests": [
+    {
+      "name": "restore-permissions-after-success",
+      "status": "blocked-before-launch",
+      "winerror": 4551,
+      "error": "[WinError 4551] An Application Control policy has blocked this file"
+    }
+  ],
+  "currentSourceBuild": "clean MSVC /W4 /WX compile and link in a fresh build directory",
+  "execution": "blocked before native test driver started; permission assertions did not execute"
+}

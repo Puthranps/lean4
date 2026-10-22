@@ -1,0 +1,80 @@
+{
+  "nativeSourceCommit": "d912506",
+  "validExportRun": {
+    "platform": "nt",
+    "toolchain": "Lean (version 4.35.0, x86_64-w64-windows-gnu, commit eb6cafb7290e8bd5f2937522d8d804f58f02bafc, Release)",
+    "tests": [
+      {
+        "name": "build-and-export",
+        "passed": true,
+        "exit": 0,
+        "stderr": "\u2714 [2/3] Built Demo (832ms)\n"
+      },
+      {
+        "name": "leanchecker",
+        "passed": true,
+        "exit": 0,
+        "stderr": ""
+      },
+      {
+        "name": "leanchecker-paranoid",
+        "passed": true,
+        "exit": 0,
+        "stderr": ""
+      },
+      {
+        "name": "lean4lean",
+        "passed": true,
+        "exit": 0,
+        "stderr": ""
+      },
+      {
+        "name": "nanoda_bin",
+        "passed": true,
+        "exit": 0,
+        "stderr": ""
+      },
+      {
+        "name": "con-leche",
+        "passed": false,
+        "exit": 2,
+        "stderr": "sandbox setup/cleanup failed: CreateProcessW(AppContainer) (4551)\r\n"
+      },
+      {
+        "name": "con-ron",
+        "passed": true,
+        "exit": 0,
+        "stderr": ""
+      }
+    ]
+  },
+  "separateInvalidProofControl": {
+    "platform": "nt",
+    "toolchain": "Lean (version 4.35.0, x86_64-w64-windows-gnu, commit eb6cafb7290e8bd5f2937522d8d804f58f02bafc, Release)",
+    "selectedCheckers": [
+      "leanchecker"
+    ],
+    "tests": [
+      {
+        "name": "build-and-export",
+        "passed": true,
+        "exit": 0,
+        "stderr": "\u2714 [2/3] Built Demo (396ms)\n"
+      },
+      {
+        "name": "leanchecker",
+        "passed": true,
+        "exit": 0,
+        "stderr": ""
+      },
+      {
+        "name": "reject-invalid-proof",
+        "passed": true,
+        "exit": 1,
+        "stderr": ""
+      }
+    ]
+  },
+  "fullParanoidRunCompleted": false,
+  "blocker": "Application Control rejected con-leche process creation (4551)"
+}
