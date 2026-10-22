@@ -14,6 +14,10 @@ def main():
     parser.add_argument("--checkers", default="leanchecker,leanchecker-paranoid,lean4lean,nanoda_bin,con-leche,con-ron")
     parser.add_argument("--driver", nargs=argparse.REMAINDER, required=True)
     options = parser.parse_args()
+    supported = {"leanchecker", "leanchecker-paranoid", "lean4lean", "nanoda_bin", "con-leche", "con-ron"}
+    selected = options.checkers.split(",")
+    if not selected or len(set(selected)) != len(selected) or not set(selected) <= supported:
+        parser.error("--checkers must name distinct bundled checker executables")
     toolchain = options.toolchain.resolve(strict=True)
     suffix = ".exe" if os.name == "nt" else ""
     binary = lambda name: str(toolchain / "bin" / (name + suffix))
@@ -83,7 +87,7 @@ def main():
                 ("nanoda_bin", [str(config)]),
                 ("con-leche", [str(export)]), ("con-ron", [str(export)]),
             ]:
-                if name in options.checkers.split(","):
+                if name in selected:
                     launch(name, binary(name), args)
             corrupted = exports / "corrupted.ndjson"
             probe_name = None
@@ -108,7 +112,7 @@ def main():
             tests.append({"name": "nonempty-export", "passed": False})
         version = subprocess.run([binary("lean"), "--version"], capture_output=True, text=True, check=True).stdout.strip()
         report = {"platform": os.name, "toolchain": version,
-                  "selectedCheckers": options.checkers.split(","), "tests": tests}
+                  "selectedCheckers": selected, "tests": tests}
         options.report.parent.mkdir(parents=True, exist_ok=True)
         options.report.write_text(json.dumps(report, indent=2))
     return int(any(not test["passed"] for test in tests))

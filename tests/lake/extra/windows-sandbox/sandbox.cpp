@@ -146,8 +146,9 @@ public:
         auto path = validate_tree(input);
         DWORD permissions = FILE_GENERIC_READ | FILE_GENERIC_EXECUTE;
         if (writable) permissions |= FILE_GENERIC_WRITE | DELETE | FILE_DELETE_CHILD;
-        change_access(path, sid, SET_ACCESS, permissions);
         grants.push_back(path);
+        // Track the root before propagation, including a partially failed update.
+        change_access(path, sid, SET_ACCESS, permissions);
         if (writable) {
             PSECURITY_DESCRIPTOR old_descriptor = nullptr;
             PACL old_label = nullptr;

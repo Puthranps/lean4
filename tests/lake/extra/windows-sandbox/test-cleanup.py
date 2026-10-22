@@ -71,25 +71,32 @@ def main():
 
         def check(name, expected):
             request_file.write_text(json.dumps(request), encoding="utf-8")
-            result = subprocess.run([str(driver), str(request_file)], capture_output=True,
-                                    text=True, timeout=30)
+            try:
+                result = subprocess.run([str(driver), str(request_file)], capture_output=True,
+                                        text=True, timeout=30)
+            except OSError as error:
+                tests.append({"name": name, "status": "blocked-before-launch",
+                              "winerror": error.winerror, "error": str(error)})
+                print(f"BLOCKED {name}: {error}", flush=True)
+                return False
             passed = result.returncode == expected and before == [security(path) for path in tracked]
             tests.append({"name": name, "passed": passed, "exit": result.returncode,
                           "stderr": result.stderr})
             print(f"{'PASS' if passed else 'FAIL'} {name}", flush=True)
+            return True
 
-        check("restore-permissions-after-success", 0)
-        request["cmd"] = str(tools / "missing.exe")
-        check("restore-permissions-after-launch-failure", 2)
-        request["cmd"] = str(probe)
-        alias = project / "hard-link"
-        os.link(source, alias)
-        check("reject-hard-linked-grant-tree", 2)
-        # Remove only this task-created alias, within the verified fixture root.
-        alias.unlink()
+        if check("restore-permissions-after-success", 0):
+            request["cmd"] = str(tools / "missing.exe")
+            check("restore-permissions-after-launch-failure", 2)
+            request["cmd"] = str(probe)
+            alias = project / "hard-link"
+            os.link(source, alias)
+            check("reject-hard-linked-grant-tree", 2)
+            # Remove only this task-created alias, within the verified fixture root.
+            alias.unlink()
     options.report.parent.mkdir(parents=True, exist_ok=True)
     options.report.write_text(json.dumps({"tests": tests}, indent=2))
-    return int(any(not test["passed"] for test in tests))
+    return int(any(not test.get("passed", False) for test in tests))
 
 
 if __name__ == "__main__":

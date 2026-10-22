@@ -1,0 +1,110 @@
+{
+  "platform": "linux",
+  "tests": [
+    {
+      "name": "read-project",
+      "passed": true,
+      "expected": 0,
+      "actual": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "write-build-output",
+      "passed": true,
+      "expected": 0,
+      "actual": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "deny-source-write",
+      "passed": true,
+      "expected": 10,
+      "actual": 10,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "deny-checker-write",
+      "passed": true,
+      "expected": 10,
+      "actual": 10,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "deny-outside-read",
+      "passed": true,
+      "expected": 10,
+      "actual": 10,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "protect-outside-host-write",
+      "passed": true,
+      "expected": [
+        0,
+        10
+      ],
+      "actual": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "child-inherits-restrictions",
+      "passed": true,
+      "expected": 10,
+      "actual": 10,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "selected-environment",
+      "passed": true,
+      "expected": 0,
+      "actual": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "omit-other-environment",
+      "passed": true,
+      "expected": 0,
+      "actual": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "literal-arguments",
+      "passed": true,
+      "expected": 0,
+      "actual": 0,
+      "stdout": "a literal; $(argument) with spaces\n\nquoted\"value\ntrailing\\\n",
+      "stderr": ""
+    },
+    {
+      "name": "deny-network",
+      "passed": true,
+      "expected": 10,
+      "actual": 10,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "allow-network",
+      "passed": true,
+      "expected": 0,
+      "actual": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "launcher-death-kills-descendants",
+      "passed": true,
+      "started": true,
+      "output_pipes_closed": true
+    }
+  ]
+}
